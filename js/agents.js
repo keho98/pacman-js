@@ -168,14 +168,90 @@ App.PacmanView = App.AgentView.extend({
    }
 });
 
-App.GhostController = Ember.Controller.Extend({
+App.GhostController = Ember.Controller.extend({
+  currentTileI:14,
+  currentTileJ:10,
+  //Tile towards which we are moving
+  nextTileI:14,
+  nextTileJ:10,
+  mapBinding: "App.map",
+  //Direction that we are moving in: up, down, left, right, stopped
+  direction: "stopped",
+  //Ghosts don't need to rotate since they float :)
+  angle: 0,
+  
+  //Coordinates in pixels of the position we are moving towards
+  //This is an example of the Ember.Computed property
+  //Each time nextTileI is changed, x updates its value
+  //nextTile is only changed in the move() function
+  x: function(){
+    return this.get('map').getXFromI(this.get('nextTileI'));
+  }.property("nextTileI"),
 
+  y: function(){
+    return this.get('map').getYFromJ(this.get('nextTileJ'));
+  }.property("nextTileJ"),
+
+  //DeltaI-the delta of Pacmans movement in terms of map Indices
+  //Ember.Computed that updates based on the value of direction property
+  dI: function(){
+    switch(this.get("direction")){
+      case "left": return -1;
+      case "right": return 1;
+      default: return 0;
+    }
+  }.property("direction"),
+
+  dJ: function(){
+    switch(this.get("direction")){
+      case "up": return -1;
+      case "down": return 1;
+      default: return 0;
+    }
+  }.property("direction"),
+
+  isValidTile: function(tileI, tileJ){
+    return this.get('map').getTileType(tileI,tileJ) === 'floor';
+  },
+
+  //canMove determines whether we should start animating the Pacman movement
+  //We only want to move if we have a direction and we are not already moving
+  canMove: function(nextTileI, nextTileJ, dI, dJ) {
+    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
+    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ);
+  },
+
+  //Move function sets the nexTile positions based on changes in dI and dJ
+  //This is an example of a Ember.Observer, which gets executed each time
+  //dI or dJ are changed
+  move: function(){
+    var dI = this.get("dI");
+    var dJ = this.get("dJ");
+    var nextTileI = this.get("currentTileI") + dI;
+    var nextTileJ = this.get("currentTileJ") + dJ;
+    if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
+      this.set("nextTileI", nextTileI);
+      this.set("nextTileJ", nextTileJ);
+      this.set("moving", true);
+    }
+  }.observes('dI', 'dJ'),
+
+
+  //Once we arrived to a new tile, we update the current tile
+  //We call move again as we want the Pacman to continue moving
+  //in the given direction
+  arrived: function(){
+    this.set("moving", false);
+    this.set("currentTileI", this.get("nextTileI"));
+    this.set("currentTileJ", this.get("nextTileJ"));
+    this.move();
+  }
 });
 
 //GhostView is almost the same as the Pacman view, however because the ghosts consist of mulitple
 //svg elements, we need to have additional logic to create all of them
 App.GhostView = App.AgentView.extend({
-  controller: function(){ return App.GhostController.create();}.property();
+  controller: function(){ return App.GhostController.create();}.property(),
   ghostSvgBinding: "App.greenGhost",
   didInsertElement: function() {
     var paper = this.get("paper");
@@ -197,7 +273,7 @@ App.GhostView = App.AgentView.extend({
     this.renderGhostEye(this.get("ghostSvg.rightEyeball"), eyeballColor);
     this.renderGhostEye(this.get("ghostSvg.rightEye"), eyeColor);
     //The Translation transform will be applied to each element in the set
-    this.get("sprite").transform(""+ ["T", 14*36, 10*36]);
+    this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
   },
  
   renderGhostEye: function(eyeSvg, color){
