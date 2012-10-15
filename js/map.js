@@ -21,7 +21,7 @@ App.map = Ember.Object.create({
   tiles:    $.extend(true,[],mapData),
   getXFromI: function(index) { return index * this.get('tileSize'); },
   getYFromJ: function(index) { return index * this.get('tileSize'); },
-  getTileType: function(i,j) { return this.get('tiles')[j][i] === 1 ? 'wall' :'floor'}
+  getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'}
 });
 
 /*
