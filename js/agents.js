@@ -42,24 +42,29 @@ App.AgentController = Ember.Controller.extend({
 
   //DeltaI-the delta of Pacmans movement in terms of map Indices
   //Ember.Computed that updates based on the value of direction property
-  dI: function(){
-    switch(this.get("direction")){
-      case "left": return -1;
-      case "right": return 1;
-      default: return 0;
-    }
-  }.property("direction"),
+  // dI: function(){
+  //   console.log("dI Direction " + this.get("direction"));
+  //   switch(this.get("direction")){
+  //     case "left": return -1;
+  //     case "right": return 1;
+  //     case "up": return 0;
+  //     case "down": return 0;
+  //     default: return 0;
+  //   }
+  // }.property("direction"),
 
-  dJ: function(){
-    switch(this.get("direction")){
-      case "up": return -1;
-      case "down": return 1;
-      default: return 0;
-    }
-  }.property("direction"),
+  // dJ: function(){
+  //   console.log("dJ Direction " + this.get("direction"));
+  //   switch(this.get("direction")){
+  //     case "left": return 0;
+  //     case "right": return 0;
+  //     case "up": return -1;
+  //     case "down": return 1;
+  //     default: return 0;
+  //   }
+  // }.property("direction"),
 
   isValidTile: function(tileI, tileJ){
-    console.log("Checking tile " + tileI + ", " + tileJ);
     return this.get('map').getTileType(tileI,tileJ) === 'floor';
   },
 
@@ -74,8 +79,14 @@ App.AgentController = Ember.Controller.extend({
   //This is an example of a Ember.Observer, which gets executed each time
   //dI or dJ are changed
   move: function(){
-    var dI = this.get("dI");
-    var dJ = this.get("dJ");
+    var dJ = 0;
+    var dI = 0;
+    switch(this.get("direction")){
+      case "left": dI = -1; dJ = 0; break;
+      case "right": dI = 1; dJ = 0; break;
+      case "up": dI = 0; dJ = -1; break;
+      case "down": dI = 0; dJ = 1; break;
+    }
     var nextTileI = this.get("currentTileI") + dI;
     var nextTileJ = this.get("currentTileJ") + dJ;
     if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
@@ -83,17 +94,13 @@ App.AgentController = Ember.Controller.extend({
       this.set("nextTileJ", nextTileJ);
       this.set("moving", true);
     }
-  }.observes('dI', 'dJ'),
-
-  //Once we arrived to a new tile, we update the current tile
-  //We call move again as we want the Pacman to continue moving
-  //in the given direction
-  arrived: function(){
-    this.set("moving", false);
-    this.set("currentTileI", this.get("nextTileI"));
-    this.set("currentTileJ", this.get("nextTileJ"));
-    this.move();
-  }
+    // else if(!this.isValidTile(nextTileI, nextTileJ)){
+    //   console.log("Invalid Tile, dI:" + dI + " dJ:" + dJ);
+    //   this.set("nextTileI", this.get("currentTileI"));
+    //   this.set("nextTileJ", this.get("currentTileJ"));
+    //   this.set("moving", false);
+    // }
+  }.observes('direction')
 })
 
 App.PacmanController = App.AgentController.extend({
@@ -115,6 +122,13 @@ App.PacmanController = App.AgentController.extend({
       case 39: this.set("direction", "right"); event.preventDefault(); break;
       case 40: this.set("direction", "down"); event.preventDefault(); break;
     }
+  },
+
+  arrived: function(){
+    this.set("moving", false);
+    this.set("currentTileI", this.get("nextTileI"));
+    this.set("currentTileJ", this.get("nextTileJ"));
+    this.move();
   }
 });
 
@@ -180,7 +194,15 @@ App.PacmanView = App.AgentView.extend({
 });
 
 App.GhostController = App.AgentController.extend({
-
+  moveRandom: function(){
+    this.set("direction", "up");
+  },
+  arrived: function(){
+    this.set("moving", false);
+    this.set("currentTileI", this.get("nextTileI"));
+    this.set("currentTileJ", this.get("nextTileJ"));
+    this.move();
+  }
 });
 
 //GhostView is almost the same as the Pacman view, however because the ghosts consist of mulitple
@@ -214,6 +236,7 @@ App.GhostView = App.AgentView.extend({
     this.renderGhostEye(this.get("ghostSvg.rightEye"), eyeColor);
     //The Translation transform will be applied to each element in the set
     this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
+    this.get("controller").moveRandom();
   },
  
   renderGhostEye: function(eyeSvg, color){
