@@ -40,30 +40,6 @@ App.AgentController = Ember.Controller.extend({
     return this.get('map').getYFromJ(this.get('nextTileJ'));
   }.property("nextTileJ"),
 
-  //DeltaI-the delta of Pacmans movement in terms of map Indices
-  //Ember.Computed that updates based on the value of direction property
-  // dI: function(){
-  //   console.log("dI Direction " + this.get("direction"));
-  //   switch(this.get("direction")){
-  //     case "left": return -1;
-  //     case "right": return 1;
-  //     case "up": return 0;
-  //     case "down": return 0;
-  //     default: return 0;
-  //   }
-  // }.property("direction"),
-
-  // dJ: function(){
-  //   console.log("dJ Direction " + this.get("direction"));
-  //   switch(this.get("direction")){
-  //     case "left": return 0;
-  //     case "right": return 0;
-  //     case "up": return -1;
-  //     case "down": return 1;
-  //     default: return 0;
-  //   }
-  // }.property("direction"),
-
   isValidTile: function(tileI, tileJ){
     return this.get('map').getTileType(tileI,tileJ) === 'floor';
   },
@@ -97,12 +73,6 @@ App.AgentController = Ember.Controller.extend({
     else if(!this.isValidTile(nextTileI, nextTileJ)){
       this.set("moving", false);
     }
-    // else if(!this.isValidTile(nextTileI, nextTileJ)){
-    //   console.log("Invalid Tile, dI:" + dI + " dJ:" + dJ);
-    //   this.set("nextTileI", this.get("currentTileI"));
-    //   this.set("nextTileJ", this.get("currentTileJ"));
-    //   this.set("moving", false);
-    // }
   }.observes('direction')
 })
 
@@ -198,6 +168,11 @@ App.PacmanView = App.AgentView.extend({
      this.get("sprite").animate({"path":this.get("openPacman")}, 300, null, callback);
    }
 });
+/*
+ * For the Ghost class, the agent will continuously move through the board, looping through
+ the arrived -> moveRandom -> moveChain. The animation of movement/resolution of map position
+ to pixel coordinates is resolved identically to the pacman controller.
+ */
 
 App.GhostController = App.AgentController.extend({
   checkPacman: function(){
