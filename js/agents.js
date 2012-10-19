@@ -74,7 +74,6 @@ App.AgentController = Ember.Controller.extend({
     var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
     return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ);
   },
-
   //Move function sets the nexTile positions based on changes in dI and dJ
   //This is an example of a Ember.Observer, which gets executed each time
   //dI or dJ are changed
@@ -182,7 +181,7 @@ App.PacmanView = App.AgentView.extend({
       //Move the Pacman to its starting x,y
       this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
       this.animateOpen();
-      console.log( this.get("x"))
+      console.log( this.get("x"));
    },
 
    //These two functions animate between an open and a closed pacman
@@ -197,6 +196,16 @@ App.PacmanView = App.AgentView.extend({
 });
 
 App.GhostController = App.AgentController.extend({
+  aBinding: "App.PacmanView.controller.nextTileI",
+  pacmanNextTileJBinding: "App.PacmanView.controller",
+  pBinding: "App.blueGhost.fillColor",
+  checkPacman: function(){
+    console.log("Pacman is at " + this.get("a") + " " + this.get("pacmanNextTileJ") + " " + this.get("p"));
+    if(this.get("nextTileI") === this.get("pacmanNextTileI") 
+      && this.get("nextTileJ") === this.get("pacmanNextTileJ")){
+      console.log("Found pacman!");
+    }
+  },
   moveRandom: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;
@@ -209,15 +218,13 @@ App.GhostController = App.AgentController.extend({
         case 1: dI = 1; currentDirection = "right"; break;
         case 2: dJ = -1; currentDirection = "up"; break;
         case 3: dJ = 1; currentDirection = "down"; break;
-        default: currentDirection = "none"; console.log("no valid places"); break;
+        default: currentDirection = "none"; break;
       }
       nextTileI = this.get("currentTileI") + dI;
       nextTileJ = this.get("currentTileJ") + dJ;
       if(this.isValidTile(nextTileI, nextTileJ)) validDirections.push(currentDirection);
-      else console.log("Invalid direction " + currentDirection +" to " + nextTileI + "," + nextTileJ);
     }
     var selection = Math.floor((Math.random()*validDirections.length));
-    console.log("Ghost moving " + validDirections[selection]);
     this.set("direction", validDirections[selection]);
     this.move();
   },
@@ -226,7 +233,7 @@ App.GhostController = App.AgentController.extend({
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
     this.set("moving", false);
-    console.log("Setting moving false");
+    this.checkPacman();
     this.moveRandom();
   }
 });
