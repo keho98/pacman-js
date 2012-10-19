@@ -94,6 +94,9 @@ App.AgentController = Ember.Controller.extend({
       this.set("nextTileJ", nextTileJ);
       this.set("moving", true);
     }
+    else if(!this.isValidTile(nextTileI, nextTileJ)){
+      this.set("moving", false);
+    }
     // else if(!this.isValidTile(nextTileI, nextTileJ)){
     //   console.log("Invalid Tile, dI:" + dI + " dJ:" + dJ);
     //   this.set("nextTileI", this.get("currentTileI"));
@@ -195,26 +198,42 @@ App.PacmanView = App.AgentView.extend({
 
 App.GhostController = App.AgentController.extend({
   moveRandom: function(){
-    this.set("direction", "up");
+    var dI = 0, dJ = 0; 
+    var nextTileI, nextTileJ;
+    var validDirections = new Array();
+    for(var i = 0; i< 4; i++){
+      var currentDirection;
+      dI = 0; dJ = 0;
+      switch(i){
+        case 0: dI = -1; currentDirection = "left"; break;
+        case 1: dI = 1; currentDirection = "right"; break;
+        case 2: dJ = -1; currentDirection = "up"; break;
+        case 3: dJ = 1; currentDirection = "down"; break;
+        default: currentDirection = "none"; console.log("no valid places"); break;
+      }
+      nextTileI = this.get("currentTileI") + dI;
+      nextTileJ = this.get("currentTileJ") + dJ;
+      if(this.isValidTile(nextTileI, nextTileJ)) validDirections.push(currentDirection);
+      else console.log("Invalid direction " + currentDirection +" to " + nextTileI + "," + nextTileJ);
+    }
+    var selection = Math.floor((Math.random()*validDirections.length));
+    console.log("Ghost moving " + validDirections[selection]);
+    this.set("direction", validDirections[selection]);
+    this.move();
   },
+
   arrived: function(){
-    this.set("moving", false);
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
-    this.move();
+    this.set("moving", false);
+    console.log("Setting moving false");
+    this.moveRandom();
   }
 });
 
 //GhostView is almost the same as the Pacman view, however because the ghosts consist of mulitple
 //svg elements, we need to have additional logic to create all of them
 App.GhostView = App.AgentView.extend({
-  controller: function(){ return App.GhostController.create({
-    currentTileI:14,
-    currentTileJ:10,
-    nextTileI:14,
-    nextTileJ:10
-  });}.property(),
-  ghostSvgBinding: "App.greenGhost",
   didInsertElement: function() {
     var paper = this.get("paper");
     //We use a Raphael Set to group body and the eyes of the ghost.
@@ -246,4 +265,42 @@ App.GhostView = App.AgentView.extend({
   }
 });
 
+App.GreenGhostView = App.GhostView.extend({
+  controller: function(){ return App.GhostController.create({
+    currentTileI:14,
+    currentTileJ:10,
+    nextTileI:14,
+    nextTileJ:10
+  });}.property(),
+  ghostSvgBinding: "App.greenGhost"
+});
 
+App.BlueGhostView = App.GhostView.extend({
+  controller: function(){ return App.GhostController.create({
+    currentTileI:13,
+    currentTileJ:10,
+    nextTileI:13,
+    nextTileJ:10
+  });}.property(),
+  ghostSvgBinding: "App.blueGhost"
+});
+
+App.OrangeGhostView = App.GhostView.extend({
+  controller: function(){ return App.GhostController.create({
+    currentTileI:15,
+    currentTileJ:10,
+    nextTileI:15,
+    nextTileJ:10
+  });}.property(),
+  ghostSvgBinding: "App.orangeGhost"
+});
+
+App.PinkGhostView = App.GhostView.extend({
+  controller: function(){ return App.GhostController.create({
+    currentTileI:15,
+    currentTileJ:10,
+    nextTileI:15,
+    nextTileJ:10
+  });}.property(),
+  ghostSvgBinding: "App.pinkGhost"
+});
