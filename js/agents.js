@@ -67,7 +67,6 @@ App.AgentController = Ember.Controller.extend({
   isValidTile: function(tileI, tileJ){
     return this.get('map').getTileType(tileI,tileJ) === 'floor';
   },
-
   //canMove determines whether we should start animating the Pacman movement
   //We only want to move if we have a direction and we are not already moving
   canMove: function(nextTileI, nextTileJ, dI, dJ) {
@@ -91,6 +90,8 @@ App.AgentController = Ember.Controller.extend({
     if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
       this.set("nextTileI", nextTileI);
       this.set("nextTileJ", nextTileJ);
+      this.set("map.pacmanNextTileI", this.get("nextTileI"));
+      this.set("map.pacmanNextTileJ", this.get("nextTileJ"));
       this.set("moving", true);
     }
     else if(!this.isValidTile(nextTileI, nextTileJ)){
@@ -130,6 +131,8 @@ App.PacmanController = App.AgentController.extend({
     this.set("moving", false);
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
+    this.set("map.pacmanCurrentTileI", this.get("currentTileI"));
+    this.set("map.pacmanCurrentTileJ", this.get("currentTileJ"));
     this.move();
   }
 });
@@ -182,6 +185,7 @@ App.PacmanView = App.AgentView.extend({
       this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
       this.animateOpen();
       console.log( this.get("x"));
+      console.log( this.get("ghost"))
    },
 
    //These two functions animate between an open and a closed pacman
@@ -196,16 +200,12 @@ App.PacmanView = App.AgentView.extend({
 });
 
 App.GhostController = App.AgentController.extend({
-  aBinding: "App.PacmanView.controller.nextTileI",
-  pacmanNextTileJBinding: "App.PacmanView.controller",
-  pBinding: "App.blueGhost.fillColor",
   checkPacman: function(){
-    console.log("Pacman is at " + this.get("a") + " " + this.get("pacmanNextTileJ") + " " + this.get("p"));
-    if(this.get("nextTileI") === this.get("pacmanNextTileI") 
-      && this.get("nextTileJ") === this.get("pacmanNextTileJ")){
+    if(this.get("map.pacmanCurrentTileI") === this.get("nextTileI") 
+      && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")){
       console.log("Found pacman!");
     }
-  },
+  }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
   moveRandom: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;

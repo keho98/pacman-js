@@ -19,6 +19,13 @@ var mapData=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 App.map = Ember.Object.create({
   tileSize: 36,
   tiles:    $.extend(true,[],mapData),
+  state: false,
+  //A bit contrived, but it seems that ember does not allow bindings between
+  //controllers, so I use the map object as an intermediary between agents.
+  pacmanCurrentTileI:0,
+  pacmanCurrentTileJ:0,
+  pacmanNextTileI:0,
+  pacmanNextTileJ:0,
   getXFromI: function(index) { return index * this.get('tileSize'); },
   getYFromJ: function(index) { return index * this.get('tileSize'); },
   getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'}
