@@ -66,8 +66,6 @@ App.AgentController = Ember.Controller.extend({
     if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
       this.set("nextTileI", nextTileI);
       this.set("nextTileJ", nextTileJ);
-      this.set("map.pacmanNextTileI", this.get("nextTileI"));
-      this.set("map.pacmanNextTileJ", this.get("nextTileJ"));
       this.set("moving", true);
     }
     else if(!this.isValidTile(nextTileI, nextTileJ)){
@@ -87,6 +85,29 @@ App.PacmanController = App.AgentController.extend({
       default : return 0;
     }
   }.property("direction"),
+
+  move: function(){
+    var dJ = 0;
+    var dI = 0;
+    switch(this.get("direction")){
+      case "left": dI = -1; dJ = 0; break;
+      case "right": dI = 1; dJ = 0; break;
+      case "up": dI = 0; dJ = -1; break;
+      case "down": dI = 0; dJ = 1; break;
+    }
+    var nextTileI = this.get("currentTileI") + dI;
+    var nextTileJ = this.get("currentTileJ") + dJ;
+    if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
+      this.set("nextTileI", nextTileI);
+      this.set("nextTileJ", nextTileJ);
+      this.set("map.pacmanNextTileI", this.get("nextTileI"));
+      this.set("map.pacmanNextTileJ", this.get("nextTileJ"));
+      this.set("moving", true);
+    }
+    else if(!this.isValidTile(nextTileI, nextTileJ)){
+      this.set("moving", false);
+    }
+  }.observes('direction'),
 
   handleKeyDown: function(event) {
     switch(event.keyCode) {
@@ -155,7 +176,6 @@ App.PacmanView = App.AgentView.extend({
       this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
       this.animateOpen();
       console.log( this.get("x"));
-      console.log( this.get("ghost"))
    },
 
    //These two functions animate between an open and a closed pacman
@@ -176,9 +196,11 @@ App.PacmanView = App.AgentView.extend({
 
 App.GhostController = App.AgentController.extend({
   checkPacman: function(){
-    if(this.get("map.pacmanCurrentTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")){
-      console.log("Found pacman!");
+    if((this.get("map.pacmanCurrentTileI") === this.get("nextTileI") 
+      && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")) ||
+      (this.get("map.pacmanNextTileI") === this.get("nextTileI") 
+      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ"))){
+      console.log("Found pacman at " + this.get("map.pacmanNextTileI") + " " + this.get("map.pacmanNextTileJ"));
     }
   }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
   moveRandom: function(){
