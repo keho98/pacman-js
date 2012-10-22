@@ -23,6 +23,7 @@ App.item = Ember.Object.create({
   getXFromI: function(index) { return index * this.get('tileSize') + this.get('tileSize')/2; },
   getYFromJ: function(index) { return index * this.get('tileSize') + this.get('tileSize')/2; },
   getItemType: function(i,j) { return this.get('itemList')[j][i] === 0 ? 'floor' :'wall'},
+  setElementTo: function(i,j, value){ this.get('itemList')[j][i] = value}
 });
 
 /*
@@ -81,6 +82,7 @@ App.ItemTileRowView = Ember.CollectionView.extend({
 */
 App.ItemTilesView = Ember.CollectionView.extend({
   content: App.item.get("tiles"),
+  //By following the map object, we see where pacman moves, and remove the object located at that location.
   removedElement: function(){
     this.get('childViews')[this.get('map.pacmanCurrentTileJ')].eatenAt(this.get('map.pacmanCurrentTileI'));
   }.observes('map.pacmanCurrentTileI', 'map.pacmanCurrentTileJ'),

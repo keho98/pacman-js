@@ -39,7 +39,28 @@ App.AgentController = Ember.Controller.extend({
   y: function(){
     return this.get('map').getYFromJ(this.get('nextTileJ'));
   }.property("nextTileJ"),
-
+  
+  move: function(){
+    var dJ = 0;
+    var dI = 0;
+    switch(this.get("direction")){
+      case "left": dI = -1; dJ = 0; break;
+      case "right": dI = 1; dJ = 0; break;
+      case "up": dI = 0; dJ = -1; break;
+      case "down": dI = 0; dJ = 1; break;
+    }
+    var nextTileI = this.get("currentTileI") + dI;
+    var nextTileJ = this.get("currentTileJ") + dJ;
+    if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
+      this.set("nextTileI", nextTileI);
+      this.set("nextTileJ", nextTileJ);
+      this.set("moving", true);
+    }
+    else if(!this.isValidTile(nextTileI, nextTileJ)){
+      this.set("moving", false);
+    }
+  }.observes('direction'),
+  
   isValidTile: function(tileI, tileJ){
     return this.get('map').getTileType(tileI,tileJ) === 'floor';
   },
@@ -250,7 +271,8 @@ App.GreenGhostView = App.GhostView.extend({
     currentTileI:14,
     currentTileJ:10,
     nextTileI:14,
-    nextTileJ:10
+    nextTileJ:10,
+    aggression: .6
   });}.property(),
   ghostSvgBinding: "App.greenGhost"
 });
@@ -260,7 +282,8 @@ App.BlueGhostView = App.GhostView.extend({
     currentTileI:13,
     currentTileJ:10,
     nextTileI:13,
-    nextTileJ:10
+    nextTileJ:10,
+    aggression: .5
   });}.property(),
   ghostSvgBinding: "App.blueGhost"
 });
@@ -270,7 +293,8 @@ App.OrangeGhostView = App.GhostView.extend({
     currentTileI:15,
     currentTileJ:10,
     nextTileI:15,
-    nextTileJ:10
+    nextTileJ:10,
+    aggression: .7
   });}.property(),
   ghostSvgBinding: "App.orangeGhost"
 });
@@ -280,7 +304,8 @@ App.PinkGhostView = App.GhostView.extend({
     currentTileI:15,
     currentTileJ:10,
     nextTileI:15,
-    nextTileJ:10
+    nextTileJ:10,
+    aggression: .6
   });}.property(),
   ghostSvgBinding: "App.pinkGhost"
 });
