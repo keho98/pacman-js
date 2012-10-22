@@ -74,6 +74,7 @@ App.AgentController = Ember.Controller.extend({
 
 App.PacmanController = App.AgentController.extend({
   itemBinding: "App.item",
+  superMode: false,
   //Angle-The angle based on pacman's direction
   angle: function(){
     switch(this.get("direction")){
@@ -122,7 +123,8 @@ App.PacmanController = App.AgentController.extend({
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
     if(this.get("item").getItemType(this.get("currentTileI"), this.get("currentTileJ")) === 'super'){
-      this.set("map.superPacman", true);
+      this.set("superMode", true)
+      this.set("map.superPacman", this.get("superMode"));
     }
     this.set("map.pacmanCurrentTileI", this.get("currentTileI"));
     this.set("map.pacmanCurrentTileJ", this.get("currentTileJ"));
@@ -160,6 +162,7 @@ App.PacmanView = App.AgentView.extend({
    });}.property(),
    openPacmanBinding: "App.openPacman",
    closedPacmanBinding: "App.closedPacman",
+   superModeBinding: "controller.superMode",
    fillColor:   "#201A00",
    strokeColor: "#FFCC00",
     //This is called when we insert the view into the DOM
@@ -180,6 +183,9 @@ App.PacmanView = App.AgentView.extend({
       console.log( this.get("x"));
    },
 
+   toggleSuper: function(){
+    if(this.get("super")) this.get("sprite").toFront();
+   }.observes("superMode"),
    //These two functions animate between an open and a closed pacman
    animateOpen: function(){
      var callback = _.bind(this.animateClosed, this);
@@ -193,7 +199,7 @@ App.PacmanView = App.AgentView.extend({
 
 /*
  * For the Ghost class, the agent will continuously move through the board, looping through
- the arrived -> moveRandom -> moveChain. The animation of movement/resolution of map position
+ the arrived -> moveNext -> moveChain. The animation of movement/resolution of map position
  to pixel coordinates is resolved identically to the pacman controller.
  */
 
@@ -207,7 +213,7 @@ App.GhostController = App.AgentController.extend({
     }
   }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
   
-  moveRandom: function(){
+  moveNext: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;
     var validDirections = new Array();
@@ -231,6 +237,7 @@ App.GhostController = App.AgentController.extend({
   },
 
   arrived: function(){
+    //If Pacman is in super mode, transform into scared
     if(this.get("map.superPacman")){
       this.set("scared", true);
     }
@@ -241,11 +248,12 @@ App.GhostController = App.AgentController.extend({
     this.set("currentTileJ", this.get("nextTileJ"));
     this.set("moving", false);
     this.checkPacman();
-    this.moveRandom();
+    this.moveNext();
   },
 
   handleKeyDown: function(event) {
-    this.moveRandom();
+    //Start movement on keypress
+    this.moveNext();
   },
 
   startBlink: function(){
@@ -266,8 +274,36 @@ App.GhostView = App.AgentView.extend({
     $('body').keydown(function(event) {
       _this.get("controller").handleKeyDown(event);
     });
-    this.renderGhost();
+    this.renderGhost("ghostSvg");
   },
+
+  renderGhost: function(ghostType){
+    if(this.get("sprite")) this.get("sprite").remove();
+    var paper = this.get("paper");
+    var sprite = paper.set();
+    this.set("sprite", sprite);
+    var ghostBody = paper.path(this.get(ghostType).path);
+    ghostBody.attr({
+       fill: this.get(ghostType).fillColor,
+       stroke: this.get(ghostType).strokeColor,
+    })
+    sprite.push(ghostBody);
+    if(this.get(ghostType).eyeballColor) {
+      var eyeballColor = this.get(ghostType).eyeballColor;
+      this.renderGhostEye(this.get(ghostType).leftEyeball, eyeballColor); 
+      this.renderGhostEye(this.get(ghostType).rightEyeball, eyeballColor);
+    }
+    if(this.get(ghostType).eyeColor) {
+      var eyeColor = this.get(ghostType).eyeColor;
+      this.renderGhostEye(this.get(ghostType).leftEyeball, eyeballColor); 
+      this.renderGhostEye(this.get(ghostType).leftEye, eyeColor);
+      this.renderGhostEye(this.get(ghostType).rightEye, eyeColor);
+    }
+    //The Translation transform will be applied to each element in the set
+    this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
+    //On render, start ghost movement
+  },
+
   renderGhostEye: function(eyeSvg, color){
     var eye = this.get("paper").circle(eyeSvg.x, eyeSvg.y, eyeSvg.r);
     eye.attr("fill", color);
@@ -285,53 +321,15 @@ App.GhostView = App.AgentView.extend({
      this.get("sprite")[0].animate({"fill-opacity":.2}, 20, null, callback);
   },
 
-  renderGhost: function(){
-    if(this.get("sprite")) this.get("sprite").remove();
-    var paper = this.get("paper");
-    var sprite = paper.set();
-    this.set("sprite", sprite);
-    var ghostBody = paper.path(this.get("ghostSvg").path);
-    ghostBody.attr({
-       fill: this.get('ghostSvg.fillColor'),
-       stroke: this.get('ghostSvg.strokeColor'),
-       'fill-opacity': .8
-    })
-    sprite.push(ghostBody);
-    var eyeballColor = this.get("ghostSvg.eyeballColor");
-    var eyeColor = this.get("ghostSvg.eyeColor");
-    this.renderGhostEye(this.get("ghostSvg.leftEyeball"), eyeballColor); 
-    this.renderGhostEye(this.get("ghostSvg.leftEye"), eyeColor);
-    this.renderGhostEye(this.get("ghostSvg.rightEyeball"), eyeballColor);
-    this.renderGhostEye(this.get("ghostSvg.rightEye"), eyeColor);
-    //The Translation transform will be applied to each element in the set
-    this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
-    //On render, start ghost movement
-  },
-
-  renderScared: function(){
-    if(this.get("sprite")) this.get("sprite").remove();
-    var paper = this.get("paper");
-    var sprite = paper.set();
-    this.set("sprite", sprite);
-    var ghostBody = paper.path(this.get("scaredSvg.path"));
-    ghostBody.attr({
-       fill: this.get('scaredSvg.fillColor'),
-       stroke: this.get('scaredSvg.strokeColor')
-    })
-    sprite.push(ghostBody);
-    var eyeballColor = this.get("scaredSvg.eyeballColor");
-    this.renderGhostEye(this.get("scaredSvg.leftEyeball"), eyeballColor); 
-    this.renderGhostEye(this.get("scaredSvg.rightEyeball"), eyeballColor);
-    //The Translation transform will be applied to each element in the set
-    this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
-  },
-
   toggleScared: function(){
     if(this.get("scared")){
-      this.renderScared();
+      this.set("time", 900);
+      this.renderGhost("scaredSvg");
     }
     else{
-      this.renderGhost();
+      this.set("time", 600);
+      this.renderGhost("ghostSvg");
+      this.get("sprite").toFront();
     }
   }.observes("scared")
 });
