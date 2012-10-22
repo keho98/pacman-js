@@ -48,33 +48,11 @@ App.AgentController = Ember.Controller.extend({
   canMove: function(nextTileI, nextTileJ, dI, dJ) {
     var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
     return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ);
-  },
-  //Move function sets the nexTile positions based on changes in dI and dJ
-  //This is an example of a Ember.Observer, which gets executed each time
-  //dI or dJ are changed
-  move: function(){
-    var dJ = 0;
-    var dI = 0;
-    switch(this.get("direction")){
-      case "left": dI = -1; dJ = 0; break;
-      case "right": dI = 1; dJ = 0; break;
-      case "up": dI = 0; dJ = -1; break;
-      case "down": dI = 0; dJ = 1; break;
-    }
-    var nextTileI = this.get("currentTileI") + dI;
-    var nextTileJ = this.get("currentTileJ") + dJ;
-    if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
-      this.set("nextTileI", nextTileI);
-      this.set("nextTileJ", nextTileJ);
-      this.set("moving", true);
-    }
-    else if(!this.isValidTile(nextTileI, nextTileJ)){
-      this.set("moving", false);
-    }
-  }.observes('direction')
+  }
 })
 
 App.PacmanController = App.AgentController.extend({
+  itemBinding: "App.item",
   //Angle-The angle based on pacman's direction
   angle: function(){
     switch(this.get("direction")){
@@ -188,6 +166,7 @@ App.PacmanView = App.AgentView.extend({
      this.get("sprite").animate({"path":this.get("openPacman")}, 300, null, callback);
    }
 });
+
 /*
  * For the Ghost class, the agent will continuously move through the board, looping through
  the arrived -> moveRandom -> moveChain. The animation of movement/resolution of map position
@@ -196,10 +175,8 @@ App.PacmanView = App.AgentView.extend({
 
 App.GhostController = App.AgentController.extend({
   checkPacman: function(){
-    if((this.get("map.pacmanCurrentTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")) ||
-      (this.get("map.pacmanNextTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ"))){
+    if(this.get("map.pacmanNextTileI") === this.get("nextTileI") 
+      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")){
       console.log("Found pacman at " + this.get("map.pacmanNextTileI") + " " + this.get("map.pacmanNextTileJ"));
     }
   }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
@@ -240,9 +217,6 @@ App.GhostController = App.AgentController.extend({
 App.GhostView = App.AgentView.extend({
   didInsertElement: function() {
     var paper = this.get("paper");
-    //We use a Raphael Set to group body and the eyes of the ghost.
-    //Raphael sets have the same Api as the Elements themselves, so we can still keep our animation
-    //code from AgentView.
     var sprite = paper.set();
     this.set("sprite", sprite);
     var ghostBody = paper.path(this.get("ghostSvg.path"));
@@ -259,12 +233,14 @@ App.GhostView = App.AgentView.extend({
     this.renderGhostEye(this.get("ghostSvg.rightEye"), eyeColor);
     //The Translation transform will be applied to each element in the set
     this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
+    //On render, start ghost movement
     this.get("controller").moveRandom();
   },
  
   renderGhostEye: function(eyeSvg, color){
     var eye = this.get("paper").circle(eyeSvg.x, eyeSvg.y, eyeSvg.r);
     eye.attr("fill", color);
+    console.log("fill eye with color : " + color)
     this.get("sprite").push(eye);
   }
 });

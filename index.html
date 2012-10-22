@@ -23,6 +23,9 @@
       {{#view App.MapView id="map"}}
         {{view App.TilesView id="tiles"}}
       {{/view}}
+      {{#view App.ItemView id="items"}}
+        {{view App.ItemTilesView id="itemTiles"}}
+      {{/view}}
       {{view App.PacmanView viewName="pacman" id="pac"}}
       {{view App.BlueGhostView viewName="blueGhost" id="blueGhost"}}
       {{view App.GreenGhostView viewName="greenGhost" id="greenGhost"}}
@@ -41,6 +44,7 @@
   <script src="js/svg.js"></script>
   <script src="js/raphael_wrapper.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/items.js"></script>
   <script src="js/agents.js"></script>
 </body>
 </html>

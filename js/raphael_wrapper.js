@@ -19,7 +19,6 @@ App.RaphaelPaper = Ember.View.extend({
 //in other views to render ourselves
 App.RaphaelView = Ember.View.extend({
   //The sprite that was rendered onto the paper
-  sprite: null,
   //Example of a Ember.Computed property for initializing object properties, note that
   //it doesn't depend on any other property so it will only be computed once
   paper: function(){
