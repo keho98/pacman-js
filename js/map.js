@@ -43,7 +43,6 @@ App.map = Ember.Object.create({
   startSuperModeTimer: function(){
     var _this = this;
     if(this.get('superPacman')){
-      console.log("Super mode");
       if(this.get("superModeTimer")) clearTimeout(this.get("superModeTimer"));
       this.set("superModeTimer", setTimeout(this.setFinalCount, this.superModeTime));
       this.set("finalCount", false);

@@ -30,7 +30,7 @@ App.AgentController = Ember.Controller.extend({
   mapBinding: "App.map",
   //Direction that we are moving in: up, down, left, right, stopped
   direction: "stopped",
-
+  gameOverBinding: "App.map.gameOver",
   //Coordinates in pixels of the position we are moving towards
   //This is an example of the Ember.Computed property
   //Each time nextTileI is changed, x updates its value
@@ -42,7 +42,11 @@ App.AgentController = Ember.Controller.extend({
   y: function(){
     return this.get('map').getYFromJ(this.get('nextTileJ'));
   }.property("nextTileJ"),
-  
+
+  gameOver: function(){
+    return this.get("map.gameOver");
+  }.property('gameOver'),
+
   move: function(){
     var dJ = 0;
     var dI = 0;
@@ -66,12 +70,6 @@ App.AgentController = Ember.Controller.extend({
   
   isValidTile: function(tileI, tileJ){
     return this.get('map').getTileType(tileI,tileJ) === 'floor';
-  },
-  //canMove determines whether we should start animating the Pacman movement
-  //We only want to move if we have a direction and we are not already moving
-  canMove: function(nextTileI, nextTileJ, dI, dJ) {
-    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
-    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ);
   }
 })
 
@@ -111,10 +109,13 @@ App.PacmanController = App.AgentController.extend({
       this.set("moving", false);
     }
   }.observes('direction'),
-
-  handleGameOver: function(){
-    console.log("Game over!");
-  }.observes('map.gameOver'),
+  
+  //canMove determines whether we should start animating the Pacman movement
+  //We only want to move if we have a direction and we are not already moving
+  canMove: function(nextTileI, nextTileJ, dI, dJ) {
+    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
+    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ) && !this.get("gameOver");
+  },
 
   handleKeyDown: function(event) {
     switch(event.keyCode) {
@@ -193,6 +194,10 @@ App.PacmanView = App.AgentView.extend({
       console.log( this.get("x"));
    },
 
+   animateGameOver: function(){
+      this.get("sprite").animate({"opacity": 0, "transform": ""+ ["R", -1800] + ["T",this.get("x"), this.get("y")]}, 3000);
+   }.observes("controller.gameOver"),
+
    toggleSuper: function(){
     if(this.get("super")) this.get("sprite").toFront();
    }.observes("superMode"),
@@ -219,7 +224,8 @@ App.GhostController = App.AgentController.extend({
   eaten: false,
   checkPacman: function(){
     if(this.get("map.pacmanNextTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")){
+      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")
+      && this.get("moving")){
       if(this.get("scared")){
         this.set("nextTileI", App.GHOST_HOME_I);
         this.set("nextTileJ", App.GHOST_HOME_J);
@@ -232,8 +238,13 @@ App.GhostController = App.AgentController.extend({
         this.set("map.gameOver", true);
       }
     }
-  }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
+  }.observes("map.pacmanNextTileI", "map.pacmanNextTileJ"),
   
+  canMove: function(nextTileI, nextTileJ, dI, dJ) {
+    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
+    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ);
+  },
+
   moveNext: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;
