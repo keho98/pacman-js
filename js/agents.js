@@ -261,7 +261,6 @@ App.GhostView = App.AgentView.extend({
   renderGhostEye: function(eyeSvg, color){
     var eye = this.get("paper").circle(eyeSvg.x, eyeSvg.y, eyeSvg.r);
     eye.attr("fill", color);
-    console.log("fill eye with color : " + color)
     this.get("sprite").push(eye);
   }
 });

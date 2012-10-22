@@ -1,6 +1,6 @@
 //Simple item where 1s are walls and 0s are empty tiles
 var itemData=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-             [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1],
+             [1,0,0,2,1,0,0,0,1,0,2,0,1,0,0,1,0,0,2,1,0,0,0,1,2,0,0,1,1],
              [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,0,1],
              [1,0,0,0,1,0,1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1],
              [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,1,0,1,0,1,0,1,0,0,1],
@@ -8,9 +8,9 @@ var itemData=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
              [1,0,0,0,0,0,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
              [1,0,1,1,1,0,1,0,0,0,0,0,1,1,0,1,1,0,1,0,1,1,0,1,1,1,1,0,1],
              [1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-             [1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1],
-             [1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0,1,0,1,0,1,1,0,1,0,1,1,0,1],
-             [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1],
+             [1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1,0,1,1,0,1],
+             [1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1,0,1,1,0,1],
+             [1,0,0,2,0,0,1,0,0,0,2,0,1,1,1,1,1,0,2,0,0,0,0,1,0,0,2,0,1],
              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 /*
   item object that contains information about the world, right now
@@ -34,6 +34,7 @@ App.ItemTileView = App.RaphaelView.extend({
   //Binding to the item data, example of Ember bindings
   itemBinding: 'App.item',
   foodColor: '#2AA5FF',
+  superFoodColor: 'yellow',
 
   //Ember computed that given our horizontal index, computes the horizontal
   //coordinate. It uses contentIndex property of Ember.CollectionView
@@ -64,6 +65,14 @@ App.ItemTileView = App.RaphaelView.extend({
       this.set('sprite', sprite);
       this.get('sprite').attr('stroke', color);
     }
+    else if(this.get("content") === 2){
+      var paper = this.get('paper');
+      var size = this.get('item.circleRadius');
+      var color = this.get('superFoodColor');
+      var sprite = paper.circle(this.get('positionX'),this.get('positionY'),size*2);
+      this.set('sprite', sprite);
+      this.get('sprite').attr('stroke', color);
+    }
   }
 });
 
@@ -81,7 +90,8 @@ App.ItemTileRowView = Ember.CollectionView.extend({
   for each row in itemData
 */
 App.ItemTilesView = Ember.CollectionView.extend({
-  content: App.item.get("tiles"),
+  content: App.item.get("itemList"),
+  mapBinding: "App.map",
   //By following the map object, we see where pacman moves, and remove the object located at that location.
   removedElement: function(){
     this.get('childViews')[this.get('map.pacmanCurrentTileJ')].eatenAt(this.get('map.pacmanCurrentTileI'));
