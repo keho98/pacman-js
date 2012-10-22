@@ -13,6 +13,9 @@
     7.Once Pacman arrives, arrived() in the controller gets called, calling move() again and going back to 4
 */
 
+App.GHOST_HOME_I = 14;
+App.GHOST_HOME_J = 10;
+
 /*
   Person Controller
   Generalized controller for pieces on the game board which move
@@ -109,6 +112,10 @@ App.PacmanController = App.AgentController.extend({
     }
   }.observes('direction'),
 
+  handleGameOver: function(){
+    console.log("Game over!");
+  }.observes('map.gameOver'),
+
   handleKeyDown: function(event) {
     switch(event.keyCode) {
       case 37: this.set("direction", "left"); event.preventDefault(); break;
@@ -123,7 +130,9 @@ App.PacmanController = App.AgentController.extend({
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
     if(this.get("item").getItemType(this.get("currentTileI"), this.get("currentTileJ")) === 'super'){
-      this.set("superMode", true)
+      this.set("superMode", false);
+      this.set("map.superPacman", this.get("superMode"));
+      this.set("superMode", true);
       this.set("map.superPacman", this.get("superMode"));
     }
     this.set("map.pacmanCurrentTileI", this.get("currentTileI"));
@@ -160,6 +169,7 @@ App.PacmanView = App.AgentView.extend({
       nextTileI:1,
       nextTileJ:1
    });}.property(),
+
    openPacmanBinding: "App.openPacman",
    closedPacmanBinding: "App.closedPacman",
    superModeBinding: "controller.superMode",
@@ -209,7 +219,12 @@ App.GhostController = App.AgentController.extend({
   checkPacman: function(){
     if(this.get("map.pacmanNextTileI") === this.get("nextTileI") 
       && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")){
-      console.log("Found pacman at " + this.get("map.pacmanNextTileI") + " " + this.get("map.pacmanNextTileJ"));
+      if(this.get("scared")){
+        console.log("Ghost Hit!");
+      }
+      else{
+        this.set("map.gameOver", true);
+      }
     }
   }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
   
@@ -266,6 +281,7 @@ App.GhostController = App.AgentController.extend({
 //GhostView is almost the same as the Pacman view, however because the ghosts consist of mulitple
 //svg elements, we need to have additional logic to create all of them
 App.GhostView = App.AgentView.extend({
+
   scaredSvgBinding: "App.scaredGhost",
   scaredBinding: "controller.scared",
   blinkBinding: "controller.blink",
@@ -369,10 +385,10 @@ App.OrangeGhostView = App.GhostView.extend({
 
 App.PinkGhostView = App.GhostView.extend({
   controller: function(){ return App.GhostController.create({
-    currentTileI:15,
-    currentTileJ:10,
-    nextTileI:15,
-    nextTileJ:10,
+    currentTileI:14,
+    currentTileJ:11,
+    nextTileI:14,
+    nextTileJ:11,
     aggression: .6
   });}.property(),
   ghostSvgBinding: "App.pinkGhost"

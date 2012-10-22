@@ -1,4 +1,9 @@
-//Simple item where 1s are walls and 0s are empty tiles
+/*
+ * itemGrid of identical dimension of map
+ * 0 = Normal food
+ * 1 = No item
+ * 2 = Super food
+ */
 var itemData=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
              [1,0,0,2,1,0,0,0,1,0,2,0,1,0,2,1,0,0,2,1,0,0,0,1,2,0,0,1,1],
              [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,0,1],
@@ -20,6 +25,15 @@ App.item = Ember.Object.create({
   tileSize: 36,
   circleRadius: 5,
   itemList:    $.extend(true,[],itemData),
+  totalItems: function(){
+    var total = 0;
+    for(var i = 0; i < this.get('itemList').length; i++){
+      for(var j = 0; j < this.get('itemList')[i].length; j++){
+        if((this.get('itemList')[i][j] === 0) || (this.get('itemList')[i][j] === 2)) total += 1;
+      }
+    }
+    return total;
+  },
   getXFromI: function(index) { return index * this.get('tileSize') + this.get('tileSize')/2; },
   getYFromJ: function(index) { return index * this.get('tileSize') + this.get('tileSize')/2; },
   getItemType: function(i,j) { 
@@ -41,7 +55,6 @@ App.ItemTileView = App.RaphaelView.extend({
   itemBinding: 'App.item',
   foodColor: '#2AA5FF',
   superFoodColor: 'yellow',
-
   //Ember computed that given our horizontal index, computes the horizontal
   //coordinate. It uses contentIndex property of Ember.CollectionView
   positionX: function() {
@@ -57,7 +70,7 @@ App.ItemTileView = App.RaphaelView.extend({
     return this.get('item.tileSize');
   }.property('item.tileSize'),
 
-  ateElement: function(){
+  removeElement: function(){
     if(this.get('sprite')) this.get('sprite').remove();
     this.get('item').setElementTo(this.get('contentIndex'), this.get('parentView.contentIndex'),1);
   },
@@ -86,7 +99,7 @@ App.ItemTileView = App.RaphaelView.extend({
 //Ember CollectionView that keeps one row of tiles
 App.ItemTileRowView = Ember.CollectionView.extend({
   eatenAt: function(x){
-    this.get('childViews')[x].ateElement();
+    this.get('childViews')[x].removeElement();
   },
   itemViewClass: App.ItemTileView
 });

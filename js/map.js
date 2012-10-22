@@ -21,22 +21,38 @@ App.map = Ember.Object.create({
   tiles:    $.extend(true,[],mapData),
   //A bit contrived, but it seems that ember does not allow bindings between
   //controllers, so I use the map object as an intermediary between agents.
+  
+  //Pacman status
   pacmanCurrentTileI:0,
   pacmanCurrentTileJ:0,
   pacmanNextTileI:0,
   pacmanNextTileJ:0,
+  gameOver: false,
+
+  //Game modes
   superPacman: false,
   finalCount: false,
+  
+  superModeTime: 10000,
+  countdownTime: 3000,
+  superModeTimer: null,
+
   getXFromI: function(index) { return index * this.get('tileSize'); },
   getYFromJ: function(index) { return index * this.get('tileSize'); },
   getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'},
   startSuperModeTimer: function(){
     var _this = this;
-    setTimeout(this.setFinalCount, 10000);
+    if(this.get('superPacman')){
+      console.log("Super mode");
+      if(this.get("superModeTimer")) clearTimeout(this.get("superModeTimer"));
+      this.set("superModeTimer", setTimeout(this.setFinalCount, this.superModeTime));
+      this.set("finalCount", false);
+    }
   }.observes('superPacman'),
   setFinalCount: function(){
+    App.map.set('superModeTimer', null);
     App.map.set('finalCount', true);
-    setTimeout(App.map.stopSuperMode, 3000);
+    App.map.set("superModeTimer", setTimeout(App.map.stopSuperMode, App.map.countdownTime));
   },
   stopSuperMode: function(){
     App.map.set("superPacman", false);
