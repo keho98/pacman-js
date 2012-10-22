@@ -121,6 +121,9 @@ App.PacmanController = App.AgentController.extend({
     this.set("moving", false);
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
+    if(this.get("item").getItemType(this.get("currentTileI"), this.get("currentTileJ")) === 'super'){
+      this.set("map.superPacman", true);
+    }
     this.set("map.pacmanCurrentTileI", this.get("currentTileI"));
     this.set("map.pacmanCurrentTileJ", this.get("currentTileJ"));
     this.move();
@@ -195,12 +198,15 @@ App.PacmanView = App.AgentView.extend({
  */
 
 App.GhostController = App.AgentController.extend({
+  scared: false,
+  blink: false,
   checkPacman: function(){
     if(this.get("map.pacmanNextTileI") === this.get("nextTileI") 
       && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")){
       console.log("Found pacman at " + this.get("map.pacmanNextTileI") + " " + this.get("map.pacmanNextTileJ"));
     }
   }.observes("map.pacmanCurrentTileI", "map.pacmanCurrentTileJ"),
+  
   moveRandom: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;
@@ -225,25 +231,70 @@ App.GhostController = App.AgentController.extend({
   },
 
   arrived: function(){
+    if(this.get("map.superPacman")){
+      this.set("scared", true);
+    }
+    else if(this.get("scared") && !this.get("map.superPacman")){
+      this.set("scared", false);
+    }
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
     this.set("moving", false);
     this.checkPacman();
     this.moveRandom();
-  }
+  },
+
+  handleKeyDown: function(event) {
+    this.moveRandom();
+  },
+
+  startBlink: function(){
+    if(this.get("map.finalCount")) this.set("blink", true);
+    else this.set("blink", false);
+  }.observes("map.finalCount")
+
 });
 
 //GhostView is almost the same as the Pacman view, however because the ghosts consist of mulitple
 //svg elements, we need to have additional logic to create all of them
 App.GhostView = App.AgentView.extend({
+  scaredSvgBinding: "App.scaredGhost",
+  scaredBinding: "controller.scared",
+  blinkBinding: "controller.blink",
   didInsertElement: function() {
+    var _this = this;
+    $('body').keydown(function(event) {
+      _this.get("controller").handleKeyDown(event);
+    });
+    this.renderGhost();
+  },
+  renderGhostEye: function(eyeSvg, color){
+    var eye = this.get("paper").circle(eyeSvg.x, eyeSvg.y, eyeSvg.r);
+    eye.attr("fill", color);
+    this.get("sprite").push(eye);
+  },
+
+  // For animate on/off, since the path is the first object pushed, we simply select it.
+  animateOn: function(){
+     var callback = _.bind(this.animateOff, this);
+     if(this.get('blink'))this.get("sprite")[0].animate({"fill-opacity":.8}, 20, null, callback);
+  }.observes('blink'),
+
+  animateOff: function(){
+     var callback = _.bind(this.animateOn, this);
+     this.get("sprite")[0].animate({"fill-opacity":.2}, 20, null, callback);
+  },
+
+  renderGhost: function(){
+    if(this.get("sprite")) this.get("sprite").remove();
     var paper = this.get("paper");
     var sprite = paper.set();
     this.set("sprite", sprite);
-    var ghostBody = paper.path(this.get("ghostSvg.path"));
+    var ghostBody = paper.path(this.get("ghostSvg").path);
     ghostBody.attr({
        fill: this.get('ghostSvg.fillColor'),
-       stroke: this.get('ghostSvg.strokeColor')
+       stroke: this.get('ghostSvg.strokeColor'),
+       'fill-opacity': .8
     })
     sprite.push(ghostBody);
     var eyeballColor = this.get("ghostSvg.eyeballColor");
@@ -255,14 +306,34 @@ App.GhostView = App.AgentView.extend({
     //The Translation transform will be applied to each element in the set
     this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
     //On render, start ghost movement
-    this.get("controller").moveRandom();
   },
- 
-  renderGhostEye: function(eyeSvg, color){
-    var eye = this.get("paper").circle(eyeSvg.x, eyeSvg.y, eyeSvg.r);
-    eye.attr("fill", color);
-    this.get("sprite").push(eye);
-  }
+
+  renderScared: function(){
+    if(this.get("sprite")) this.get("sprite").remove();
+    var paper = this.get("paper");
+    var sprite = paper.set();
+    this.set("sprite", sprite);
+    var ghostBody = paper.path(this.get("scaredSvg.path"));
+    ghostBody.attr({
+       fill: this.get('scaredSvg.fillColor'),
+       stroke: this.get('scaredSvg.strokeColor')
+    })
+    sprite.push(ghostBody);
+    var eyeballColor = this.get("scaredSvg.eyeballColor");
+    this.renderGhostEye(this.get("scaredSvg.leftEyeball"), eyeballColor); 
+    this.renderGhostEye(this.get("scaredSvg.rightEyeball"), eyeballColor);
+    //The Translation transform will be applied to each element in the set
+    this.get("sprite").transform(""+ ["T",this.get("x"), this.get("y")]);
+  },
+
+  toggleScared: function(){
+    if(this.get("scared")){
+      this.renderScared();
+    }
+    else{
+      this.renderGhost();
+    }
+  }.observes("scared")
 });
 
 App.GreenGhostView = App.GhostView.extend({

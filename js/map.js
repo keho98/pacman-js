@@ -26,9 +26,23 @@ App.map = Ember.Object.create({
   pacmanCurrentTileJ:0,
   pacmanNextTileI:0,
   pacmanNextTileJ:0,
+  superPacman: false,
+  finalCount: false,
   getXFromI: function(index) { return index * this.get('tileSize'); },
   getYFromJ: function(index) { return index * this.get('tileSize'); },
-  getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'}
+  getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'},
+  startSuperModeTimer: function(){
+    var _this = this;
+    setTimeout(this.setFinalCount, 10000);
+  }.observes('superPacman'),
+  setFinalCount: function(){
+    App.map.set('finalCount', true);
+    setTimeout(App.map.stopSuperMode, 3000);
+  },
+  stopSuperMode: function(){
+    App.map.set("superPacman", false);
+    App.map.set("finalCount", false);
+  }
 });
 
 /*

@@ -1,6 +1,6 @@
 //Simple item where 1s are walls and 0s are empty tiles
 var itemData=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-             [1,0,0,2,1,0,0,0,1,0,2,0,1,0,0,1,0,0,2,1,0,0,0,1,2,0,0,1,1],
+             [1,0,0,2,1,0,0,0,1,0,2,0,1,0,2,1,0,0,2,1,0,0,0,1,2,0,0,1,1],
              [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,0,1],
              [1,0,0,0,1,0,1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1],
              [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,1,0,1,0,1,0,1,0,0,1],
@@ -22,8 +22,14 @@ App.item = Ember.Object.create({
   itemList:    $.extend(true,[],itemData),
   getXFromI: function(index) { return index * this.get('tileSize') + this.get('tileSize')/2; },
   getYFromJ: function(index) { return index * this.get('tileSize') + this.get('tileSize')/2; },
-  getItemType: function(i,j) { return this.get('itemList')[j][i] === 0 ? 'floor' :'wall'},
-  setElementTo: function(i,j, value){ this.get('itemList')[j][i] = value}
+  getItemType: function(i,j) { 
+    switch(this.get('itemList')[j][i]){
+      case 0: return "normal"; break;
+      case 2: return "super"; break;
+      default: return "nothing"; break;
+    }
+  },
+  setElementTo: function(i,j, value){ this.get('itemList')[j][i] = value }
 });
 
 /*
@@ -53,6 +59,7 @@ App.ItemTileView = App.RaphaelView.extend({
 
   ateElement: function(){
     if(this.get('sprite')) this.get('sprite').remove();
+    this.get('item').setElementTo(this.get('contentIndex'), this.get('parentView.contentIndex'),1);
   },
 
   // Render sprite with Raphael
