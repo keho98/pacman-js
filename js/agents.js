@@ -216,11 +216,17 @@ App.PacmanView = App.AgentView.extend({
 App.GhostController = App.AgentController.extend({
   scared: false,
   blink: false,
+  eaten: false,
   checkPacman: function(){
     if(this.get("map.pacmanNextTileI") === this.get("nextTileI") 
       && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")){
       if(this.get("scared")){
-        console.log("Ghost Hit!");
+        this.set("nextTileI", App.GHOST_HOME_I);
+        this.set("nextTileJ", App.GHOST_HOME_J);
+        this.set("currentTileI", App.GHOST_HOME_I);
+        this.set("currentTileJ", App.GHOST_HOME_J);
+        this.set("eaten", true);
+        console.log("Ghost Hit!");        
       }
       else{
         this.set("map.gameOver", true);
@@ -285,6 +291,8 @@ App.GhostView = App.AgentView.extend({
   scaredSvgBinding: "App.scaredGhost",
   scaredBinding: "controller.scared",
   blinkBinding: "controller.blink",
+  eatenBinding: "controller.eaten",
+
   didInsertElement: function() {
     var _this = this;
     $('body').keydown(function(event) {
@@ -336,6 +344,19 @@ App.GhostView = App.AgentView.extend({
      var callback = _.bind(this.animateOn, this);
      this.get("sprite")[0].animate({"fill-opacity":.2}, 20, null, callback);
   },
+
+  reset: function(){
+    this.set("eaten", false);
+    this.get("controller").arrived();
+  },
+
+  returnToHome: function(){
+    if(this.get("eaten")){
+      var callback = _.bind(this.reset, this);
+      this.get("sprite")[0].attr("fill-opacity", .3);
+      this.get("sprite").animate({"transform": ""+ ["R", this.get("angle")] + ["T",this.get("x"), this.get("y")]}, 4000, "linear",callback);
+    }
+  }.observes("eaten"),
 
   toggleScared: function(){
     if(this.get("scared")){

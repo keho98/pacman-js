@@ -33,7 +33,7 @@ App.map = Ember.Object.create({
   superPacman: false,
   finalCount: false,
   
-  superModeTime: 10000,
+  superModeTime: 8000,
   countdownTime: 3000,
   superModeTimer: null,
 
