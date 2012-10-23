@@ -20,23 +20,20 @@ App.map = Ember.Object.create({
   tileSize: 36,
   tiles:    $.extend(true,[],mapData),
 
-  //Pacman status
+  //Track pacman status so that ghosts can observe from the map binding
+  //Map serves as an intermediary between agents.
   pacmanCurrentTileI:0,
   pacmanCurrentTileJ:0,
   pacmanNextTileI:0,
   pacmanNextTileJ:0,
-  gameOver: false,
-  win: false,
-  setWin: function(){
-    console.log("Set win")
-    if(this.get("totalItems") === 0) this.set("win", true);
-    else return false;
-  }.observes("totalItems"),
 
   //Game modes
   superPacman: false,
   finalCount: false,
-  
+  gameOver: false,
+  win: false,
+
+  //Timer variables for super mode  
   superModeTime: 8000,
   countdownTime: 3000,
   superModeTimer: null,
@@ -46,19 +43,21 @@ App.map = Ember.Object.create({
   getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'},
   startSuperModeTimer: function(){
     if(this.get('superPacman')){
+      var callback = _.bind(this.setFinalCount, this);
       if(this.get("superModeTimer")) clearTimeout(this.get("superModeTimer"));
-      this.set("superModeTimer", setTimeout(this.setFinalCount, this.superModeTime));
+      this.set("superModeTimer", setTimeout(callback, this.superModeTime));
       this.set("finalCount", false);
     }
   }.observes('superPacman'),
   setFinalCount: function(){
-    App.map.set('superModeTimer', null);
-    App.map.set('finalCount', true);
-    App.map.set("superModeTimer", setTimeout(App.map.stopSuperMode, App.map.countdownTime));
+    var callback = _.bind(this.stopSuperMode, this);
+    this.set('superModeTimer', null);
+    this.set('finalCount', true);
+    this.set("superModeTimer", setTimeout(callback, this.countdownTime));
   },
   stopSuperMode: function(){
-    App.map.set("superPacman", false);
-    App.map.set("finalCount", false);
+    this.set("superPacman", false);
+    this.set("finalCount", false);
   }
 });
 

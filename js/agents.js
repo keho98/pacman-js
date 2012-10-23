@@ -239,14 +239,17 @@ App.GhostController = App.AgentController.extend({
     }
   }.observes('direction'),
 
-  /*
-   * moveNext decides where the ghost will move next
-   * Based on probability and whether the ghost is scared
-   */
+  tileCloserToPacman: function(nextTileI, nextTileJ){
+    return Math.abs(this.get("map.pacmanCurrentTileI") - nextTileI) < Math.abs(this.get("map.pacmanCurrentTileI") - this.get("currentTileI"))
+            || Math.abs(this.get("map.pacmanCurrentTileJ") - nextTileJ) < Math.abs(this.get("map.pacmanCurrentTileJ") - this.get("currentTileJ"))
+  },
+
+  // moveNext decides where the ghost will move next based on probability and whether the ghost is scared
   moveNext: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;
     var validDirections = new Array();
+    // pacmanDirections is an array of suitable next directions based on pacman's state
     var pacmanDirections = new Array();
     for(var i = 0; i< 4; i++){
       var currentDirection;
@@ -262,10 +265,17 @@ App.GhostController = App.AgentController.extend({
       nextTileJ = this.get("currentTileJ") + dJ;
       if(this.isValidTile(nextTileI, nextTileJ)) {
         validDirections.push(currentDirection);
-        if(Math.abs(this.get("map.pacmanCurrentTileI") - nextTileI) < Math.abs(this.get("map.pacmanCurrentTileI") - this.get("currentTileI"))
-          || Math.abs(this.get("map.pacmanCurrentTileJ") - nextTileJ) < Math.abs(this.get("map.pacmanCurrentTileJ") - this.get("currentTileJ"))){
+        //If not scared, move towards pacman, else run away.
+        if(!this.get("scared")){
+          if(this.tileCloserToPacman(nextTileI, nextTileJ)){
             pacmanDirections.push(currentDirection);
           }
+        } 
+        else{
+          if(!this.tileCloserToPacman(nextTileI, nextTileJ)){
+            pacmanDirections.push(currentDirection);
+          }
+        }
       }
     }
     if(Math.random() < this.get("aggression") && pacmanDirections.length != 0){
@@ -294,10 +304,7 @@ App.GhostController = App.AgentController.extend({
     this.moveNext();
   },
 
-  /*
-   * handleEaten moves the ghost back to the home set
-   * by constants.
-   */
+  //handleEaten moves the ghost back to the home set by constants.
   handleEaten: function(){
     if(this.get("eaten")){
       this.set("nextTileI", App.GHOST_HOME_I);
@@ -377,7 +384,6 @@ App.GhostView = App.AgentView.extend({
      var callback = _.bind(this.animateOn, this);
      if(this.get('blink')) this.get("sprite")[0].animate({"fill-opacity":.2}, 20, null, callback);
   }.observes('blink'),
-
 
   //Callback for after ghost is eaten, reset opacity and restart move loop
   reset: function(){
