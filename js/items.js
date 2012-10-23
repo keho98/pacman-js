@@ -25,7 +25,14 @@ App.item = Ember.Object.create({
   tileSize: 36,
   circleRadius: 5,
   itemList:    $.extend(true,[],itemData),
-  totalItems: function(){
+  mapBinding: "App.map",
+  totalItems: null,
+
+  setWin: function(){
+    if(this.get("totalItems") === 0) this.set("map.win", true);
+  }.observes("totalItems"),
+  
+  getTotalItems: function(){
     var total = 0;
     for(var i = 0; i < this.get('itemList').length; i++){
       for(var j = 0; j < this.get('itemList')[i].length; j++){
@@ -43,7 +50,14 @@ App.item = Ember.Object.create({
       default: return "nothing"; break;
     }
   },
-  setElementTo: function(i,j, value){ this.get('itemList')[j][i] = value }
+  //Checks any element value changes and updates totalItems based on that.
+  setElementTo: function(i,j, value){ 
+    this.get('itemList')[j][i] = value;
+    if(value === 1){
+      this.set("totalItems", this.getTotalItems());
+    }
+    else this.set("totalItems", this.getTotalItems());
+   }
 });
 
 /*
@@ -96,7 +110,7 @@ App.ItemTileView = App.RaphaelView.extend({
   }
 });
 
-//Ember CollectionView that keeps one row of tiles
+//Ember CollectionView that keeps one row of item tiles
 App.ItemTileRowView = Ember.CollectionView.extend({
   eatenAt: function(x){
     this.get('childViews')[x].removeElement();
@@ -104,15 +118,11 @@ App.ItemTileRowView = Ember.CollectionView.extend({
   itemViewClass: App.ItemTileView
 });
 
-/*
-  Ember CollectionView that keeps the 2d collection of TilesView
-  Based on itemViewClass, Ember automatically creates a TileRowView
-  for each row in itemData
-*/
 App.ItemTilesView = Ember.CollectionView.extend({
   content: App.item.get("itemList"),
   mapBinding: "App.map",
   //By following the map object, we see where pacman moves, and remove the object located at that location.
+  //The event is captured once then bubbled down to the child ItemTileViews.
   removedElement: function(){
     this.get('childViews')[this.get('map.pacmanCurrentTileJ')].eatenAt(this.get('map.pacmanCurrentTileI'));
   }.observes('map.pacmanCurrentTileI', 'map.pacmanCurrentTileJ'),

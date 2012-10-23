@@ -19,15 +19,19 @@ var mapData=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 App.map = Ember.Object.create({
   tileSize: 36,
   tiles:    $.extend(true,[],mapData),
-  //A bit contrived, but it seems that ember does not allow bindings between
-  //controllers, so I use the map object as an intermediary between agents.
-  
+
   //Pacman status
   pacmanCurrentTileI:0,
   pacmanCurrentTileJ:0,
   pacmanNextTileI:0,
   pacmanNextTileJ:0,
   gameOver: false,
+  win: false,
+  setWin: function(){
+    console.log("Set win")
+    if(this.get("totalItems") === 0) this.set("win", true);
+    else return false;
+  }.observes("totalItems"),
 
   //Game modes
   superPacman: false,

@@ -17,7 +17,7 @@ App.GHOST_HOME_I = 14;
 App.GHOST_HOME_J = 10;
 
 /*
-  Person Controller
+  Agent Controller
   Generalized controller for pieces on the game board which move
 */
 App.AgentController = Ember.Controller.extend({
@@ -47,26 +47,12 @@ App.AgentController = Ember.Controller.extend({
     return this.get("map.gameOver");
   }.property('gameOver'),
 
-  move: function(){
-    var dJ = 0;
-    var dI = 0;
-    switch(this.get("direction")){
-      case "left": dI = -1; dJ = 0; break;
-      case "right": dI = 1; dJ = 0; break;
-      case "up": dI = 0; dJ = -1; break;
-      case "down": dI = 0; dJ = 1; break;
-    }
-    var nextTileI = this.get("currentTileI") + dI;
-    var nextTileJ = this.get("currentTileJ") + dJ;
-    if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
-      this.set("nextTileI", nextTileI);
-      this.set("nextTileJ", nextTileJ);
-      this.set("moving", true);
-    }
-    else if(!this.isValidTile(nextTileI, nextTileJ)){
-      this.set("moving", false);
-    }
-  }.observes('direction'),
+  //canMove determines whether we should start animating the Pacman movement
+  //We only want to move if we have a direction and we are not already moving
+  canMove: function(nextTileI, nextTileJ, dI, dJ) {
+    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
+    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ) && !this.get("gameOver") && !this.get("map.win");
+  },
   
   isValidTile: function(tileI, tileJ){
     return this.get('map').getTileType(tileI,tileJ) === 'floor';
@@ -110,13 +96,6 @@ App.PacmanController = App.AgentController.extend({
     }
   }.observes('direction'),
   
-  //canMove determines whether we should start animating the Pacman movement
-  //We only want to move if we have a direction and we are not already moving
-  canMove: function(nextTileI, nextTileJ, dI, dJ) {
-    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
-    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ) && !this.get("gameOver");
-  },
-
   handleKeyDown: function(event) {
     switch(event.keyCode) {
       case 37: this.set("direction", "left"); event.preventDefault(); break;
@@ -223,32 +202,54 @@ App.GhostController = App.AgentController.extend({
   blink: false,
   eaten: false,
   checkPacman: function(){
-    if(this.get("map.pacmanNextTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ")
+    if(((this.get("map.pacmanNextTileI") === this.get("nextTileI") 
+      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ"))
+      || (this.get("map.pacmanCurrentTileI") === this.get("nextTileI") 
+      && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")))
       && this.get("moving")){
       if(this.get("scared")){
         this.set("nextTileI", App.GHOST_HOME_I);
         this.set("nextTileJ", App.GHOST_HOME_J);
         this.set("currentTileI", App.GHOST_HOME_I);
         this.set("currentTileJ", App.GHOST_HOME_J);
-        this.set("eaten", true);
-        console.log("Ghost Hit!");        
+        this.set("eaten", true);       
       }
       else{
         this.set("map.gameOver", true);
       }
     }
   }.observes("map.pacmanNextTileI", "map.pacmanNextTileJ"),
-  
-  canMove: function(nextTileI, nextTileJ, dI, dJ) {
-    var haveNonZeroDirection = (dI !== 0) || (dJ!== 0);
-    return haveNonZeroDirection && !this.get('moving') && this.isValidTile(nextTileI,nextTileJ);
-  },
 
+  move: function(){
+    var dJ = 0;
+    var dI = 0;
+    switch(this.get("direction")){
+      case "left": dI = -1; dJ = 0; break;
+      case "right": dI = 1; dJ = 0; break;
+      case "up": dI = 0; dJ = -1; break;
+      case "down": dI = 0; dJ = 1; break;
+    }
+    var nextTileI = this.get("currentTileI") + dI;
+    var nextTileJ = this.get("currentTileJ") + dJ;
+    if(this.canMove(nextTileI, nextTileJ, dI, dJ)){
+      this.set("nextTileI", nextTileI);
+      this.set("nextTileJ", nextTileJ);
+      this.set("moving", true);
+    }
+    else if(!this.isValidTile(nextTileI, nextTileJ)){
+      this.set("moving", false);
+    }
+  }.observes('direction'),
+
+  /*
+   * moveNext decides where the ghost will move next
+   * Based on probability and whether the ghost is scared
+   */
   moveNext: function(){
     var dI = 0, dJ = 0; 
     var nextTileI, nextTileJ;
     var validDirections = new Array();
+    var pacmanDirections = new Array();
     for(var i = 0; i< 4; i++){
       var currentDirection;
       dI = 0; dJ = 0;
@@ -261,10 +262,22 @@ App.GhostController = App.AgentController.extend({
       }
       nextTileI = this.get("currentTileI") + dI;
       nextTileJ = this.get("currentTileJ") + dJ;
-      if(this.isValidTile(nextTileI, nextTileJ)) validDirections.push(currentDirection);
+      if(this.isValidTile(nextTileI, nextTileJ)) {
+        validDirections.push(currentDirection);
+        if(Math.abs(this.get("map.pacmanCurrentTileI") - nextTileI) < Math.abs(this.get("map.pacmanCurrentTileI") - this.get("currentTileI"))
+          || Math.abs(this.get("map.pacmanCurrentTileJ") - nextTileJ) < Math.abs(this.get("map.pacmanCurrentTileJ") - this.get("currentTileJ"))){
+            pacmanDirections.push(currentDirection);
+          }
+      }
     }
-    var selection = Math.floor((Math.random()*validDirections.length));
-    this.set("direction", validDirections[selection]);
+    if(Math.random() < this.get("aggression") && pacmanDirections.length != 0){
+      var selection = Math.floor((Math.random()*pacmanDirections.length));
+      this.set("direction", pacmanDirections[selection]);
+    }
+    else{
+      var selection = Math.floor((Math.random()*validDirections.length));
+      this.set("direction", validDirections[selection]);
+    }
     this.move();
   },
 
@@ -282,6 +295,17 @@ App.GhostController = App.AgentController.extend({
     this.checkPacman();
     this.moveNext();
   },
+
+  /*
+   * handleEaten moves the ghost back to the home set
+   * by constants.
+   */
+  handleEaten: function(){
+    if(this.get("eaten")){
+      this.set("nextTileI", App.GHOST_HOME_I);
+      this.set("nextTileJ", App.GHOST_HOME_J);
+    }
+  }.observes('eaten'),
 
   handleKeyDown: function(event) {
     //Start movement on keypress
@@ -303,7 +327,7 @@ App.GhostView = App.AgentView.extend({
   scaredBinding: "controller.scared",
   blinkBinding: "controller.blink",
   eatenBinding: "controller.eaten",
-
+  time: 400,
   didInsertElement: function() {
     var _this = this;
     $('body').keydown(function(event) {
@@ -348,34 +372,37 @@ App.GhostView = App.AgentView.extend({
   // For animate on/off, since the path is the first object pushed, we simply select it.
   animateOn: function(){
      var callback = _.bind(this.animateOff, this);
-     if(this.get('blink'))this.get("sprite")[0].animate({"fill-opacity":.8}, 20, null, callback);
-  }.observes('blink'),
+     this.get("sprite")[0].animate({"fill-opacity":.8}, 20, null, callback);
+  },
 
   animateOff: function(){
      var callback = _.bind(this.animateOn, this);
-     this.get("sprite")[0].animate({"fill-opacity":.2}, 20, null, callback);
-  },
+     if(this.get('blink')) this.get("sprite")[0].animate({"fill-opacity":.2}, 20, null, callback);
+  }.observes('blink'),
 
+
+  //Callback for after ghost is eaten, reset opacity and restart move loop
   reset: function(){
     this.set("eaten", false);
+    this.get("sprite")[0].attr("fill-opacity", 1);
     this.get("controller").arrived();
   },
 
   returnToHome: function(){
     if(this.get("eaten")){
       var callback = _.bind(this.reset, this);
-      this.get("sprite")[0].attr("fill-opacity", .3);
+      this.get("sprite")[0].attr("fill-opacity", .2);
       this.get("sprite").animate({"transform": ""+ ["R", this.get("angle")] + ["T",this.get("x"), this.get("y")]}, 4000, "linear",callback);
     }
   }.observes("eaten"),
 
   toggleScared: function(){
     if(this.get("scared")){
-      this.set("time", 900);
+      this.set("time", 800);
       this.renderGhost("scaredSvg");
     }
     else{
-      this.set("time", 600);
+      this.set("time", 400);
       this.renderGhost("ghostSvg");
       this.get("sprite").toFront();
     }

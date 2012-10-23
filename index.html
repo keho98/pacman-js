@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title>Pacman Plus</title>
+  <title>Pacman in Ember.js - Kevin Ho</title>
 
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="stylesheet" href="css/style.css?v=2">
@@ -13,12 +13,29 @@
     html, body, .application {
       width: 100%;
       height: 100%;
+      background-color: black;
+      color:#2AA5FF;
+    }
+    .itemCount{
+      position:absolute;
+      font-family: 'Helvetica', 'Arial', 'sans-serif';
+      font-size: 24px;
+      top:0;
+    }
+    .container{
+      position: absolute;
+    }
+    .gameStatus{
+      position: absolute;
+      font-size: 48px;
+      top: 25%;
+      left:30%;
     }
   </style>
 </head>
 <body>
   <script type="text/x-handlebars" data-template-name="application">
-    <div>
+    <div class='container'>
    {{#view App.RaphaelPaper viewName="raphael" id="main" }}
       {{#view App.MapView id="map"}}
         {{view App.TilesView id="tiles"}}
@@ -31,10 +48,22 @@
       {{view App.GreenGhostView viewName="greenGhost" id="greenGhost"}}
       {{view App.PinkGhostView viewName="pinkGhost" id="pinkGhost"}}
       {{view App.OrangeGhostView viewName="orangeGhost" id="orangeGhost"}}
+      {{#if App.map.gameOver }} 
+        <div class="gameStatus">Game Over...</div>
+      {{/if}}
+      {{#if App.map.win }} 
+        <div class="gameStatus">You Win!</div>
+      {{/if}}
+      <div class="itemCount">
+      {{#if App.item.totalItems}}
+        {{App.item.totalItems}} food left
+      {{else}}
+        Use the arrow keys to start!
+      {{/if}}
+      </div>
     {{/view}}
     </div>
   </script>
-
   <script src="js/libs/jquery-1.7.2.min.js"></script>
   <script src="js/libs/raphael.js"></script>
   <script src="js/libs/handlebars-1.0.0.beta.6.js"></script>
