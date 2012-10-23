@@ -31,7 +31,7 @@ App.item = Ember.Object.create({
   setWin: function(){
     if(this.get("totalItems") === 0) this.set("map.win", true);
   }.observes("totalItems"),
-  
+
   getTotalItems: function(){
     var total = 0;
     for(var i = 0; i < this.get('itemList').length; i++){
@@ -122,7 +122,7 @@ App.ItemTilesView = Ember.CollectionView.extend({
   content: App.item.get("itemList"),
   mapBinding: "App.map",
   //By following the map object, we see where pacman moves, and remove the object located at that location.
-  //The event is captured once then bubbled down to the child ItemTileViews.
+  //The event is captured once then 'bubbled down' to the child ItemTileViews.
   removedElement: function(){
     this.get('childViews')[this.get('map.pacmanCurrentTileJ')].eatenAt(this.get('map.pacmanCurrentTileI'));
   }.observes('map.pacmanCurrentTileI', 'map.pacmanCurrentTileJ'),

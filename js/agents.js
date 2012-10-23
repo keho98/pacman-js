@@ -413,6 +413,7 @@ App.GhostView = App.AgentView.extend({
   }.observes("scared")
 });
 
+//Initialize ghosts with initial locations, colors and aggressions
 App.GreenGhostView = App.GhostView.extend({
   controller: function(){ return App.GhostController.create({
     currentTileI:14,
