@@ -110,6 +110,7 @@ App.PacmanController = App.AgentController.extend({
     this.set("currentTileI", this.get("nextTileI"));
     this.set("currentTileJ", this.get("nextTileJ"));
     if(this.get("item").getItemType(this.get("currentTileI"), this.get("currentTileJ")) === 'super'){
+      //Toggle superMode so that old timeout is stopped
       this.set("superMode", false);
       this.set("map.superPacman", this.get("superMode"));
       this.set("superMode", true);
@@ -202,20 +203,17 @@ App.GhostController = App.AgentController.extend({
   blink: false,
   eaten: false,
   checkPacman: function(){
-    if(((this.get("map.pacmanNextTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanNextTileJ") === this.get("nextTileJ"))
-      || (this.get("map.pacmanCurrentTileI") === this.get("nextTileI") 
-      && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")))
-      && this.get("moving")){
+    //Check if we will run into pacman (2 possible cases for this to be true)
+    //Case 1: These are the cases where this ghost and pacman share the same next tile and ghost is moving
+    //Case 2  The ghost's next tile is pacman's current tile and ghost is moving
+    if(((this.get("map.pacmanNextTileI") === this.get("nextTileI") && this.get("map.pacmanNextTileJ") === this.get("nextTileJ"))
+      || (this.get("map.pacmanCurrentTileI") === this.get("nextTileI") && this.get("map.pacmanCurrentTileJ") === this.get("nextTileJ")))){
       if(this.get("scared")){
-        this.set("nextTileI", App.GHOST_HOME_I);
-        this.set("nextTileJ", App.GHOST_HOME_J);
-        this.set("currentTileI", App.GHOST_HOME_I);
-        this.set("currentTileJ", App.GHOST_HOME_J);
         this.set("eaten", true);       
       }
       else{
-        this.set("map.gameOver", true);
+        var _this = this;
+        setTimeout(function(){ _this.set("map.gameOver", true) }, 300);
       }
     }
   }.observes("map.pacmanNextTileI", "map.pacmanNextTileJ"),

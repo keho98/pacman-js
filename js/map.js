@@ -45,7 +45,6 @@ App.map = Ember.Object.create({
   getYFromJ: function(index) { return index * this.get('tileSize'); },
   getTileType: function(i,j) { return this.get('tiles')[j][i] === 0 ? 'floor' :'wall'},
   startSuperModeTimer: function(){
-    var _this = this;
     if(this.get('superPacman')){
       if(this.get("superModeTimer")) clearTimeout(this.get("superModeTimer"));
       this.set("superModeTimer", setTimeout(this.setFinalCount, this.superModeTime));
